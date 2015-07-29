@@ -1,0 +1,29 @@
+{
+  "name": "breeze",
+  "version": "1.0.0",
+  "description": "Functional async flow control library",
+  "main": "breeze.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nijikokun/breeze.git"
+  },
+  "keywords": [
+    "flow",
+    "async",
+    "ocaml",
+    "functional",
+    "haskell",
+    "waterfall",
+    "try",
+    "catch"
+  ],
+  "author": "Nijiko Yonskai",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Nijikokun/breeze/issues"
+  },
+  "homepage": "https://github.com/Nijikokun/breeze#readme"
+}
