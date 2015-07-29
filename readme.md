@@ -1,6 +1,6 @@
-# Mithril Component
+# Breeze
 
-React style components for [Mithril.js][mithril]
+Functional async flow control library.
 
 [![version][npm-version]][npm-url]
 [![License][npm-license]][license-url]
