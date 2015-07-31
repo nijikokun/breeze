@@ -4,10 +4,7 @@ Functional async flow control library.
 
 [![version][npm-version]][npm-url]
 [![License][npm-license]][license-url]
-[![Build Status][travis-image]][travis-url]
 [![Downloads][npm-downloads]][npm-url]
-[![Code Climate][codeclimate-quality]][codeclimate-url]
-[![Coverage Status][codeclimate-coverage]][codeclimate-url]
 [![Dependencies][david-image]][david-url]
 
 ## Install

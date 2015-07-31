@@ -8,6 +8,7 @@ function Breeze () {
 /**
  * Takes the next (optional) callback, and generates the done callback to be passed as the first argument.
  *
+ * @private
  * @param  {Function} next Next callback in the system to be invoked.
  * @return {Function} Completion callback, first argument is error, subsequent arguments are passed down the chain.
  */
@@ -32,35 +33,51 @@ Breeze.prototype.createDoneCallback = function _breezeCreateDoneCallback (next) 
 
     // Continue
     if (next) {
-      args.push(system.createDoneCallback(this.steps.shift()))
+      args.unshift(system.createDoneCallback(system.steps.shift()))
       next.apply(this, args)
     } else {
       system.args = args
       system.context = this
     }
 
-    system.check()
+    system.check(true)
   }
+}
+
+/**
+ * Starts the next task to be completed.
+ *
+ * @private
+ * @return {void}
+ */
+Breeze.prototype.run = function _breezeRun () {
+  var args = this.args || []
+  this.running = true
+  func = this.steps.shift()
+  args.unshift(this.createDoneCallback(this.steps.shift()))
+  func.apply(this.context, args)
 }
 
 /**
  * Checks whether the system is running, needs to be ran, or has completed
  * running.
  *
+ * @private
  * @return {void}
  */
-Breeze.prototype.check = function _breezeCheck () {
-  var func
+Breeze.prototype.check = function _breezeCheck (pop) {
+  if (pop) {
+    if (this.steps.length) {
+      this.run()
+    } else {
+      this.running = false
+    }
 
-  args = this.args || []
+    return
+  }
 
-  if (!this.running && this.steps.length) {
-    this.running = true
-    func = this.steps.shift()
-    args.unshift(this.createDoneCallback(this.steps.shift()))
-    func.apply(this.context, args)
-  } else if (this.running && !this.steps.length) {
-    this.running = false
+  if (this.steps.length && !this.running) {
+    this.run()
   }
 }
 
