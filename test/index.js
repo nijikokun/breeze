@@ -1,8 +1,8 @@
-var tess = require('tess')
 var assert = require('assert')
 var breeze = require('../breeze')
+var http = require('http')
 
-tess('breeze', function (it) {
+describe('breeze', function () {
   it('should return a promise style object', function () {
     var promise = breeze()
     assert(typeof promise.then === 'function')
@@ -87,7 +87,7 @@ tess('breeze', function (it) {
     })
   })
 
-  it('should choose some when no some has matched', function () {
+  it('should choose some when some has matched', function () {
     var someA = true
     var someB = false
     var fixtureA = 'hello'
@@ -130,6 +130,77 @@ tess('breeze', function (it) {
     })
     .catch(function (err) {
       assert(false)
+    })
+  })
+
+  it('should properly chain when async is involved', function (done) {
+    var flow = breeze(function (next) {
+      var request = http.request({
+        hostname: 'httpbin.org',
+        port: 80,
+        path: '/get',
+        method: 'GET'
+      }, function (res) {
+        next(null, res)
+      })
+
+      request.on('error', next)
+      request.end()
+    })
+
+    flow.when(function (response) {
+      return response.statusCode === 200
+    }, function (next, response) {
+      assert(typeof response === 'object')
+      done()
+    })
+
+    flow.catch(function (err) {
+      assert(false)
+      done()
+    })
+  })
+
+  it('should properly handle try/catch promise success', function (done) {
+    var noop = function () {}
+    var fixture = 'hello world'
+    var promise = {
+      then: function (next) {
+        next(fixture)
+        return { catch: noop }
+      },
+      catch: noop
+    }
+
+    breeze(function (next) {
+      next(promise)
+    }).then(function (next, value) {
+      assert(value === fixture)
+      done()
+    })
+  })
+
+  it('should properly handle try/catch promise error', function (done) {
+    var fixture = 'hello world'
+    var noop = function (next) {
+      next(fixture)
+    }
+    var promise = {
+      then: function () {
+        return {
+          catch: noop
+        }
+      },
+      catch: noop
+    }
+
+    breeze(function (next) {
+      next(promise)
+    }).then(function (next, value) {
+      assert(false)
+    }).catch(function (err) {
+      assert(err === fixture)
+      done()
     })
   })
 })

@@ -4,7 +4,7 @@
   "description": "Functional async flow control library",
   "main": "breeze.js",
   "scripts": {
-    "test": "node test/index.js"
+    "test": "./node_modules/.bin/mocha --colors -R list"
   },
   "repository": {
     "type": "git",
@@ -31,6 +31,9 @@
   },
   "homepage": "https://github.com/Nijikokun/breeze#readme",
   "devDependencies": {
-    "tess": "^1.0.0"
+    "mocha": "^2.2.5"
+  },
+  "dependencies": {
+    "is-promise": "^2.0.0"
   }
 }

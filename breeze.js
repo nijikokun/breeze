@@ -1,3 +1,5 @@
+var isPromise = require('is-promise')
+
 /**
  * Breeze Constructor
  *
@@ -24,31 +26,60 @@ Breeze.prototype.createDoneCallback = function _breezeCreateDoneCallback (next) 
   var system = this
 
   return function (err) {
-    var args = Array.prototype.slice.call(arguments, 1)
-    var context
+    var context = this
 
-    // Short circuit the system
-    if (err) {
-      if (!this.onError) {
-        system.err = err
-      } else {
-        system.onError(err)
+    function handler (err) {
+      if (err) {
+        if (!this.onError) {
+          system.err = err
+        } else {
+          system.onError(err)
+        }
+
+        return (system.steps = [] && system.check())
       }
 
-      system.steps = []
-      return system.check()
-    }
+      var args = Array.prototype.slice.call(arguments, 1)
 
-    // Continue
-    if (next) {
-      args.unshift(system.createDoneCallback(system.steps.shift()))
-      next.apply(this, args)
-    } else {
+      if (next) {
+        if (typeof next === 'function') {
+          args.unshift(system.createDoneCallback(system.steps.shift()))
+          next.apply(context, args)
+          return system.check(true)
+        }
+
+        if (next[1].apply(context, args)) {
+          if (next[0] === 'when') {
+            system.hasWhenHappened = true
+          } else if (next[0] === 'some') {
+            system.hasSomeHappened = true
+          }
+
+          next = next[2]
+          args.unshift(system.createDoneCallback(system.steps.shift()))
+          next.apply(context, args)
+          return system.check(true)
+        }
+      }
+
       system.args = args
-      system.context = this
+      system.context = context
+      system.check(true)
     }
 
-    system.check(true)
+    if (isPromise(err)) {
+      var success = function () {
+        var args = Array.prototype.slice.call(arguments, 0)
+        args.unshift(null)
+        handler.apply(context, args)
+      }
+
+      return typeof err.catch === 'function'
+        ? err.then(success).catch(handler)
+        : err.then(success, handler)
+    }
+
+    return handler.apply(context, arguments)
   }
 }
 
@@ -60,10 +91,25 @@ Breeze.prototype.createDoneCallback = function _breezeCreateDoneCallback (next) 
  */
 Breeze.prototype.run = function _breezeRun () {
   var args = this.args || []
+  var context = this.context || this
+  var func = this.steps.shift()
   this.running = true
-  func = this.steps.shift()
-  args.unshift(this.createDoneCallback(this.steps.shift()))
-  func.apply(this.context, args)
+
+  if (typeof func === 'function') {
+    args.unshift(this.createDoneCallback(this.steps.shift()))
+    return func.apply(context, args)
+  }
+
+  if (func[1].apply(this.context, args)) {
+    switch (func[0]) {
+      case 'when': this.hasWhenHappened = true; break
+      case 'some': this.hasSomeHappened = true; break
+    }
+
+    func = func[2]
+    args.unshift(this.createDoneCallback(this.steps.shift()))
+    func.apply(context, args)
+  }
 }
 
 /**
@@ -74,14 +120,12 @@ Breeze.prototype.run = function _breezeRun () {
  * @return {void}
  */
 Breeze.prototype.check = function _breezeCheck (pop) {
-  if (pop) {
-    if (this.steps.length) {
-      this.run()
-    } else {
-      this.running = false
-    }
+  if (pop && this.steps.length) {
+    return this.run()
+  }
 
-    return
+  if (pop && !this.steps.length) {
+    return this.running = false
   }
 
   if (this.steps.length && !this.running) {
@@ -98,7 +142,15 @@ Breeze.prototype.check = function _breezeCheck (pop) {
  * @return {this}
  */
 Breeze.prototype.when = Breeze.prototype.maybe = function _breezeMaybeWhen (arg, next) {
-  if ((typeof arg === 'function' && arg.apply(this.context, this.args || [])) || arg) {
+  if (this.err) return this
+
+  if (typeof arg === 'function') {
+    this.steps.push(['when', arg, next])
+    this.check()
+    return this
+  }
+
+  if (arg) {
     this.hasMaybeHappened = true
     this.steps.push(next)
     this.check()
@@ -116,9 +168,17 @@ Breeze.prototype.when = Breeze.prototype.maybe = function _breezeMaybeWhen (arg,
  * @return {this}
  */
 Breeze.prototype.some = function _breezeSome (arg, next) {
+  if (this.err || this.hasNoneHappened) return this
+
   this.hasSome = true
 
-  if (!this.hasNoneHappened && ((typeof arg === 'function' && arg.apply(this.context, this.args || [])) || arg)) {
+  if (typeof arg === 'function' && arg.apply(this.context, this.args || [])) {
+    this.steps.push(['some', arg, next])
+    this.check()
+    return this
+  }
+
+  if (arg) {
     this.hasSomeHappened = true
     this.steps.push(next)
     this.check()
@@ -133,7 +193,9 @@ Breeze.prototype.some = function _breezeSome (arg, next) {
  * @return {this}
  */
 Breeze.prototype.none = function _breezeNone (next) {
-  if (!this.hasSomeHappened && this.hasSome) {
+  if (this.err || this.hasSomeHappened) return this
+
+  if (this.hasSome) {
     this.hasNoneHappened = true
     this.steps.push(next)
     this.check()
@@ -153,6 +215,8 @@ Breeze.prototype.none = function _breezeNone (next) {
  * @return {this}
  */
 Breeze.prototype.then = function _breezeThen (next) {
+  if (this.err) return this
+
   this.steps.push(next)
   this.check()
   return this
