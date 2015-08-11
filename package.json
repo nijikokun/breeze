@@ -1,10 +1,10 @@
 {
   "name": "breeze",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "description": "Functional async flow control library",
   "main": "breeze.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/index.js"
   },
   "repository": {
     "type": "git",
@@ -18,12 +18,19 @@
     "haskell",
     "waterfall",
     "try",
-    "catch"
+    "catch",
+    "promises",
+    "thennable",
+    "bluebird",
+    "q"
   ],
   "author": "Nijiko Yonskai",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Nijikokun/breeze/issues"
   },
-  "homepage": "https://github.com/Nijikokun/breeze#readme"
+  "homepage": "https://github.com/Nijikokun/breeze#readme",
+  "devDependencies": {
+    "tess": "^1.0.0"
+  }
 }

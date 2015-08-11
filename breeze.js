@@ -1,8 +1,16 @@
 /**
- * Initializes breeze class
+ * Breeze Constructor
+ *
+ * Accepts a then method as the first argument.
+ *
+ * @param {Function} method initialization method, optional.
  */
-function Breeze () {
+function Breeze (method) {
   this.steps = []
+
+  if (typeof method === 'function') {
+    this.then(method)
+  }
 }
 
 /**
@@ -90,7 +98,7 @@ Breeze.prototype.check = function _breezeCheck (pop) {
  * @return {this}
  */
 Breeze.prototype.when = Breeze.prototype.maybe = function _breezeMaybeWhen (arg, next) {
-  if (arg) {
+  if ((typeof arg === 'function' && arg.apply(this.context, this.args || [])) || arg) {
     this.hasMaybeHappened = true
     this.steps.push(next)
     this.check()
@@ -110,7 +118,7 @@ Breeze.prototype.when = Breeze.prototype.maybe = function _breezeMaybeWhen (arg,
 Breeze.prototype.some = function _breezeSome (arg, next) {
   this.hasSome = true
 
-  if (arg && !this.hasNoneHappened) {
+  if (!this.hasNoneHappened && ((typeof arg === 'function' && arg.apply(this.context, this.args || [])) || arg)) {
     this.hasSomeHappened = true
     this.steps.push(next)
     this.check()
@@ -132,7 +140,7 @@ Breeze.prototype.none = function _breezeNone (next) {
   }
 
   if (!this.hasSome) {
-    throw new Error("Cannot add none callback before some callback")
+    throw new Error("Cannot add .none check before adding .some checks")
   }
 
   return this
@@ -187,6 +195,6 @@ Breeze.prototype.reset = function _breezeReset () {
 /**
  * Create new instance of Breeze
  */
-module.exports = function breeze () {
-  return new Breeze()
+module.exports = function breeze (method) {
+  return new Breeze(method)
 }
