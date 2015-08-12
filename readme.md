@@ -31,41 +31,9 @@ var breeze = require('breeze')
 - `.catch(next)` - Any error caught will terminate stack and be sent here
 - `.reset()` - Reset current system
 
-## Example
+## Examples
 
-```js
-// initialize our step system
-// the method passed here is passed to .then, its optional, you can omit it.
-breeze(function (done) {
-  done()
-})
-// truthy check
-.maybe(1 === 1, function (done) {
-  console.log(1)
-  done(null, 'hey,', 'you can pass values!')
-})
-// checks can also be functions and are passed previous values.
-.some(function (part1, part2) {
-  return 1 === 0
-}, function (done, msg) {
-  console.log(2, msg)
-  done()
-})
-// invoked only when no .some checks pass.
-.none(function (done, part1, part2) {
-  console.log(2, ',since no some happened,', part1, part2)
-  done()
-})
-// always invoked as long as the chain continues.
-.then(function (done) {
-  console.log(3)
-  done('It finally happened.')
-})
-// invoked on error
-.catch(function (err) {
-  console.error('An error occurred!', err)
-})
-```
+Check out the [examples](examples/) directory for in-depth examples of how to use breeze.
 
 ## License
 
