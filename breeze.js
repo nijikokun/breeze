@@ -30,10 +30,11 @@ Breeze.prototype.createDoneCallback = function _breezeCreateDoneCallback () {
 
     function handler (err) {
       if (err) {
-        if (!system.onError) {
+        if (!system.onError || !system.onDeferredError) {
           system.err = err
         } else {
-          system.onError(err)
+          if (system.onError) system.onError(err)
+          if (system.onDeferredError) system.onDeferredError(err)
         }
 
         return (system.steps = [] && system.check())
@@ -70,6 +71,7 @@ Breeze.prototype.createDoneCallback = function _breezeCreateDoneCallback () {
  * @return {void}
  */
 Breeze.prototype.run = function _breezeRun () {
+  var system = this
   var args = this.args || []
   var context = this.context || this
   var func = this.steps.shift()
@@ -95,7 +97,7 @@ Breeze.prototype.run = function _breezeRun () {
     return this.check(true)
   }
 
-  if ((typeof func[1] === 'function' && func[1].apply(this.context, args)) || func[1]) {
+  if ((typeof func[1] === 'function' && func[1].apply(this.context, args)) || (typeof func[1] !== 'function' && func[1])) {
     switch (func[0]) {
       case 'when': this.hasWhenHappened = true; break;
       case 'some': this.hasSomeHappened = true; break;
@@ -211,12 +213,49 @@ Breeze.prototype.then = function _breezeThen (next) {
 Breeze.prototype.catch = function _breezeCatch (next) {
   if (this.err) {
     next(this.err)
+
+    if (this.onDeferredError) {
+      this.onDeferredError(this.err)
+    }
+
     return this
   }
 
   this.onError = next
   this.check()
   return this
+}
+
+/**
+ * Generates a deferred promise
+ *
+ * @return {Function}
+ */
+Breeze.prototype.promise = function _breezeDeferred () {
+  var system = this
+  var deferred = {
+    then: function (next) {
+      if (system.err) return deferred
+
+      system.steps.push(function () {
+        return next.apply(this, Array.prototype.slice.call(arguments, 1))
+      })
+
+      system.check()
+      return deferred
+    },
+
+    catch: function (next) {
+      if (system.err) {
+        return next(system.err)
+      }
+
+      system.onDeferredError = next
+      return deferred
+    }
+  }
+
+  return deferred
 }
 
 /**

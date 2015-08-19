@@ -51,7 +51,9 @@ describe('breeze', function () {
     .maybe(route === 'A', function (next) {
       return next(null, fixtureA)
     })
-    .maybe(route === 'B', function (next) {
+    .maybe(function () {
+      route === 'B'
+    }, function (next) {
       return next(null, fixtureB)
     })
     .then(function (next, value) {
@@ -222,6 +224,23 @@ describe('breeze', function () {
     }).then(function (next, passedValue, promiseValue) {
       assert(passedValue === 'testing')
       assert(promiseValue === fixture)
+      done()
+    }).catch(function (err) {
+      assert(false)
+    })
+  })
+
+  it('should properly success through returned promise', function (done) {
+    var fixture = 'hello world'
+
+    var flow = breeze(function (next) {
+      next(null, 'testing')
+    })
+
+    var promise = flow.promise()
+
+    promise.then(function (value) {
+      assert(value === 'testing')
       done()
     }).catch(function (err) {
       assert(false)

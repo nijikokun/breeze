@@ -29,6 +29,7 @@ var breeze = require('breeze')
 - `.none(next)` - Whenever no `some` have ran, add callback to the stack
 - `.then(next)` - Add callback to stack
 - `.catch(next)` - Any error caught will terminate stack and be sent here
+- `.promise()` - Returns a deferred promise system, allowing for a second `.catch`
 - `.reset()` - Reset current system
 
 ### Next
@@ -47,31 +48,50 @@ This allows you to chain multiple promises while still passing values down the c
 ## Example
 
 ```js
-// Initialize breeze, fetch a user
-var flow = breeze(function (next) {
-  next(api(token).getUser('nijikokun'))
+function fetchUserTodos (username) {
+  // Initialize breeze, fetch a user
+  var flow = breeze(function (next) {
+    next(api(token).getUser(username))
+  })
+
+  // Fetch user todos, pass user along the chain
+  flow.then(function (next, user) {
+    next(user.getTodos(), user)
+  })
+
+  // Catch bugs before you do your work!
+  flow.when(function (user, todos) {
+    return todos.getLength() < 0
+  }, function (next, user, todos) {
+    todos.reset()
+    next(todos.save(), user)
+  })
+
+  // Do whatever else you want
+  flow.then(function (next, user, todos) {
+    next(null, user, todos)
+  })
+
+  flow.catch(function (err) {
+    // handle internal function error should you want
+    if (err.code === 500) {
+      console.error('Holy Switch A Roo Batman! I think something really went wrong.')
+    }
+
+    console.error(err)
+  })
+
+  return flow.promise()
+}
+
+var promise = fetchUserTodos('nijikokun')
+
+promise.then(function (user, todos) {
+  // Show todos
 })
 
-// Fetch user todos, pass user along the chain
-flow.then(function (next, user) {
-  next(user.getTodos(), user)
-})
-
-// Catch bugs before you do your work!
-flow.when(function (user, todos) {
-  return todos.getLength() < 0
-}, function (next, user, todos) {
-  todos.reset()
-  next(todos.save(), user)
-})
-
-// Do whatever else you want
-flow.then(function (next, user, todos) {
-  // store user and todos.
-})
-
-flow.catch(function (err) {
-  // show error in application
+promise.catch(function (err) {
+  // Show error in application
 })
 ```
 
