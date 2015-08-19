@@ -203,4 +203,28 @@ describe('breeze', function () {
       done()
     })
   })
+
+  it('should properly handle directly passed values w/ promise', function (done) {
+    var fixture = 'hello world'
+    var noop = function () {}
+    var promise = {
+      then: function (next) {
+        next(fixture)
+        return {
+          catch: noop
+        }
+      },
+      catch: noop
+    }
+
+    breeze(function (next) {
+      next(promise, 'testing')
+    }).then(function (next, passedValue, promiseValue) {
+      assert(passedValue === 'testing')
+      assert(promiseValue === fixture)
+      done()
+    }).catch(function (err) {
+      assert(false)
+    })
+  })
 })

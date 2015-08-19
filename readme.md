@@ -1,6 +1,6 @@
 # Breeze
 
-Functional async flow control library.
+Functional async flow control library. Turn your asynchronous code into bite-sized synchronous looking functions.
 
 [![version][npm-version]][npm-url]
 [![License][npm-license]][license-url]
@@ -23,17 +23,61 @@ var breeze = require('breeze')
 ## API
 
 - `breeze(next)` - Initialize breeze flow system, supports initial `.then` method.
-- `.when(arg, next)` - When `arg` is truthy, add `next` to the stack
-- `.maybe(arg, next)` - When `arg` is truthy, add `next` to the stack, sugar for `breeze.when`
-- `.some(arg, next)` - When `arg` is truthy and no other `some` or `none` has ran, add to the stack
+- `.when(check, next)` - When `check` is truthy, add `next` to the stack
+- `.maybe(check, next)` - When `check` is truthy, add `next` to the stack, sugar for `breeze.when`
+- `.some(check, next)` - When `check` is truthy and no other `some` or `none` has ran, add to the stack
 - `.none(next)` - Whenever no `some` have ran, add callback to the stack
 - `.then(next)` - Add callback to stack
 - `.catch(next)` - Any error caught will terminate stack and be sent here
 - `.reset()` - Reset current system
 
+### Next
+
+The `next` method passed through breeze has a very small api. It accepts two variants of usage, normal node style
+`err, arguments...`, and `promise, arguments...`.
+
+When a *truthy* `err` is passed the system will halt (no other actions will be taken) and `.catch` will be triggered.
+
+When a `promise` is passed the system will attach to either the `then / catch` methods, or the `.then(then, catch)`
+method style depending on the promise type passed. Whenever the `then` is invoked, any `arguments` passed along with
+the passed promise are placed at the *front* of the arguments array, and the success arguments will be *last*.
+
+This allows you to chain multiple promises while still passing values down the chain.
+
+## Example
+
+```js
+// Initialize breeze, fetch a user
+var flow = breeze(function (next) {
+  next(api(token).getUser('nijikokun'))
+})
+
+// Fetch user todos, pass user along the chain
+flow.then(function (next, user) {
+  next(user.getTodos(), user)
+})
+
+// Catch bugs before you do your work!
+flow.when(function (user, todos) {
+  return todos.getLength() < 0
+}, function (next, user, todos) {
+  todos.reset()
+  next(todos.save(), user)
+})
+
+// Do whatever else you want
+flow.then(function (next, user, todos) {
+  // store user and todos.
+})
+
+flow.catch(function (err) {
+  // show error in application
+})
+```
+
 ## Examples
 
-Check out the [examples](examples/) directory for in-depth examples of how to use breeze.
+Check out the [examples](examples/) directory for in-depth examples and tutorials of how to use breeze.
 
 ## License
 

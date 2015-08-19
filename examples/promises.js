@@ -41,12 +41,13 @@ var OldSuccessPromise = {
 // Swap out `SuccessPromise` for `ErrorPromise` if you want to see a sad-face.
 // Swap out `SuccessPromise` for `OldSuccessPromise` if you want to see breeze recognize older promise style.
 var flow = breeze(function (next) {
-  next(SuccessPromise)
+  next(SuccessPromise, ';^)')
 })
 
 // When promise is successful
-flow.then(function (next, value) {
-  console.log('Promise should pass with ":)":', value)
+flow.then(function (next, passedValue, promiseValue) {
+  console.log('Passed values should come first ";^)":', passedValue)
+  console.log('Promise should pass with ":)":', promiseValue)
 })
 
 // When promise fails
