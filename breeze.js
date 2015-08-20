@@ -77,37 +77,41 @@ Breeze.prototype.run = function _breezeRun () {
   var func = this.steps.shift()
   this.running = true
 
-  if (typeof func === 'function') {
-    args.unshift(this.createDoneCallback())
-    return func.apply(context, args)
-  }
-
-  if (func[0] === 'none') {
-    if (!this.hasSomeHappened) {
-      this.hasNoneHappened = true
-      func = func[1]
+  try {
+    if (typeof func === 'function') {
       args.unshift(this.createDoneCallback())
       return func.apply(context, args)
     }
 
-    return this.check(true)
-  }
+    if (func[0] === 'none') {
+      if (!this.hasSomeHappened) {
+        this.hasNoneHappened = true
+        func = func[1]
+        args.unshift(this.createDoneCallback())
+        return func.apply(context, args)
+      }
 
-  if (func[0] === 'some' && this.hasSomeHappened) {
-    return this.check(true)
-  }
-
-  if ((typeof func[1] === 'function' && func[1].apply(this.context, args)) || (typeof func[1] !== 'function' && func[1])) {
-    switch (func[0]) {
-      case 'when': this.hasWhenHappened = true; break;
-      case 'some': this.hasSomeHappened = true; break;
+      return this.check(true)
     }
 
-    func = func[2]
-    args.unshift(this.createDoneCallback())
-    func.apply(context, args)
-  } else {
-    return this.check(true)
+    if (func[0] === 'some' && this.hasSomeHappened) {
+      return this.check(true)
+    }
+
+    if ((typeof func[1] === 'function' && func[1].apply(this.context, args)) || (typeof func[1] !== 'function' && func[1])) {
+      switch (func[0]) {
+        case 'when': this.hasWhenHappened = true; break;
+        case 'some': this.hasSomeHappened = true; break;
+      }
+
+      func = func[2]
+      args.unshift(this.createDoneCallback())
+      func.apply(context, args)
+    } else {
+      return this.check(true)
+    }
+  } catch (error) {
+    console.error(error)
   }
 }
 
