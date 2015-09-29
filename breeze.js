@@ -30,7 +30,7 @@ Breeze.prototype.createDoneCallback = function _breezeCreateDoneCallback () {
 
     function handler (err) {
       if (err) {
-        if (!system.onError || !system.onDeferredError) {
+        if (!system.onError && !system.onDeferredError) {
           system.err = err
         } else {
           if (system.onError) system.onError(err)
