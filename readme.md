@@ -120,4 +120,4 @@ Licensed under [The MIT License](LICENSE).
 [david-url]: https://david-dm.org/Nijikokun/breeze
 [david-image]: https://img.shields.io/david/Nijikokun/breeze.svg?style=flat
 
-[download]: https://github.com/Nijikokun/breeze/archive/v1.0.1.zip
+[download]: https://github.com/Nijikokun/breeze/archive/v1.1.8.zip
