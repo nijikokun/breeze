@@ -32,8 +32,5 @@
   "homepage": "https://github.com/Nijikokun/breeze#readme",
   "devDependencies": {
     "mocha": "^2.2.5"
-  },
-  "dependencies": {
-    "is-promise": "^2.0.0"
   }
 }

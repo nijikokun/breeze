@@ -1,4 +1,11 @@
-var isPromise = require('is-promise')
+/**
+ * Determine whether passed object is a promise or not.
+ * @param  {Object}  obj Value to be checked
+ * @return {Boolean} Check result
+ */
+function isPromise (obj) {
+  return !!obj && (typeof obj === 'object' || typeof obj === 'function') && typeof obj.then === 'function'
+}
 
 /**
  * Breeze Constructor
@@ -71,7 +78,6 @@ Breeze.prototype.createDoneCallback = function _breezeCreateDoneCallback () {
  * @return {void}
  */
 Breeze.prototype.run = function _breezeRun () {
-  var system = this
   var args = this.args || []
   var context = this.context || this
   var func = this.steps.shift()
@@ -100,8 +106,10 @@ Breeze.prototype.run = function _breezeRun () {
 
     if ((typeof func[1] === 'function' && func[1].apply(this.context, args)) || (typeof func[1] !== 'function' && func[1])) {
       switch (func[0]) {
-        case 'when': this.hasWhenHappened = true; break;
-        case 'some': this.hasSomeHappened = true; break;
+        case 'when': this.hasWhenHappened = true
+          break
+        case 'some': this.hasSomeHappened = true
+          break
       }
 
       func = func[2]
@@ -110,8 +118,15 @@ Breeze.prototype.run = function _breezeRun () {
     } else {
       return this.check(true)
     }
-  } catch (error) {
-    console.error(error)
+  } catch (err) {
+    if (!this.onError && !this.onDeferredError) {
+      this.err = err
+    } else {
+      if (this.onError) this.onError(err)
+      if (this.onDeferredError) this.onDeferredError(err)
+    }
+
+    return (this.steps = [] && this.check())
   }
 }
 
@@ -130,11 +145,11 @@ Breeze.prototype.check = function _breezeCheck (pop) {
   }
 
   if (pop && !this.steps.length) {
-    return this.running = false
+    return (this.running = false)
   }
 
   if (this.steps.length && !this.running) {
-    this.run()
+    return this.run()
   }
 }
 
@@ -181,7 +196,7 @@ Breeze.prototype.none = function _breezeNone (next) {
   if (this.err) return this
 
   if (!this.hasSome) {
-    throw new Error("Cannot add .none check before adding .some checks")
+    throw new Error('Cannot add .none check before adding .some checks')
   }
 
   if (this.hasSome) {
