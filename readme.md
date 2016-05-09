@@ -23,13 +23,15 @@ var breeze = require('breeze')
 ## API
 
 - `breeze(next)` - Initialize breeze flow system, supports initial `.then` method.
+- `.pass(value)` - Introduce new value into flow system, argument is appended to system arguments passed through `next`.
 - `.when(check, next)` - When `check` is truthy, add `next` to the stack
 - `.maybe(check, next)` - When `check` is truthy, add `next` to the stack, sugar for `breeze.when`
 - `.some(check, next)` - When `check` is truthy and no other `some` or `none` has ran, add to the stack
 - `.none(next)` - Whenever no `some` have ran, add callback to the stack
 - `.then(next)` - Add callback to stack
+- `.each(iterables, iteratee, next)` - Iterate over an object / array and invoke a method for each entry. `iterables` is not a reference therefore, you must properly store `iterables` outside of the flow if you plan to update or modify the object.
 - `.catch(next)` - Any error caught will terminate stack and be sent here
-- `.promise()` - Returns a deferred promise system, allowing for a second `.catch`
+- `.deferred()` - Returns a deferred promise system, allowing for a passable then / catch.
 - `.reset()` - Reset current system
 
 ### Next
@@ -45,59 +47,15 @@ the passed promise are placed at the *front* of the arguments array, and the suc
 
 This allows you to chain multiple promises while still passing values down the chain.
 
-## Example
-
-```js
-function fetchUserTodos (username) {
-  // Initialize breeze, fetch a user
-  var flow = breeze(function (next) {
-    next(api(token).getUser(username))
-  })
-
-  // Fetch user todos, pass user along the chain
-  flow.then(function (next, user) {
-    next(user.getTodos(), user)
-  })
-
-  // Catch bugs before you do your work!
-  flow.when(function (user, todos) {
-    return todos.getLength() < 0
-  }, function (next, user, todos) {
-    todos.reset()
-    next(todos.save(), user)
-  })
-
-  // Do whatever else you want
-  flow.then(function (next, user, todos) {
-    next(null, user, todos)
-  })
-
-  flow.catch(function (err) {
-    // handle internal function error should you want
-    if (err.code === 500) {
-      console.error('Holy Switch A Roo Batman! I think something really went wrong.')
-    }
-
-    console.error(err)
-  })
-
-  return flow.promise()
-}
-
-var promise = fetchUserTodos('nijikokun')
-
-promise.then(function (user, todos) {
-  // Show todos
-})
-
-promise.catch(function (err) {
-  // Show error in application
-})
-```
-
 ## Examples
 
-Check out the [examples](examples/) directory for in-depth examples and tutorials of how to use breeze.
+- [basic](examples/basic.js) - Bare-bones example (`breeze`, `then`, `catch`)
+- [promises](examples/promises.js) - Returning and using promises within breeze (`then`, `next(promise)`)
+- [each](examples/each.js) - Breeze array iteration (`then`, `pass`, `each`, `catch`)
+- [when](examples/maybe.js) - Conditional flows (`then`, `when`)
+
+
+Check out the [examples](examples/) directory for more in-depth examples and tutorials of how to use breeze.
 
 ## License
 
@@ -120,4 +78,4 @@ Licensed under [The MIT License](LICENSE).
 [david-url]: https://david-dm.org/Nijikokun/breeze
 [david-image]: https://img.shields.io/david/Nijikokun/breeze.svg?style=flat
 
-[download]: https://github.com/Nijikokun/breeze/archive/v1.1.8.zip
+[download]: https://github.com/Nijikokun/breeze/archive/v1.2.0.zip

@@ -1,15 +1,14 @@
 var assert = require('assert')
 var breeze = require('../breeze')
-var http = require('http')
 
 describe('breeze', function () {
-  it('should return a promise style object', function () {
+  it('breeze(): returns deferred', function () {
     var promise = breeze()
     assert(typeof promise.then === 'function')
     assert(typeof promise.catch === 'function')
   })
 
-  it('should support an initial then', function () {
+  it('breeze(): supports then method as first argument', function () {
     breeze(function (next) {
       assert(typeof next === 'function')
       next(null, 'passed')
@@ -22,7 +21,7 @@ describe('breeze', function () {
     })
   })
 
-  it('should support then chaining', function () {
+  it('then(): should properly continue on previous step success', function () {
     var fixture = 'value'
 
     breeze().then(function (next) {
@@ -32,89 +31,103 @@ describe('breeze', function () {
     })
   })
 
-  it('should properly catch errors', function () {
+  it('catch(): should be invoked when an error occurs', function () {
     var fixture = new Error('Simply testing.')
+    var flow = breeze()
 
-    breeze().then(function (next) {
+    flow.then(function (next) {
       return next(fixture)
-    }).catch(function (err) {
+    })
+
+    flow.catch(function (err) {
       assert(err === fixture)
     })
   })
 
-  it('should choose the proper road when using maybe', function () {
+  it('maybe(): should invoke second argument when match passes', function () {
     var route = 'A'
     var fixtureA = 'hello'
     var fixtureB = 'world'
+    var flow = breeze()
 
-    breeze()
-    .maybe(route === 'A', function (next) {
+    flow.maybe(route === 'A', function (next) {
       return next(null, fixtureA)
     })
-    .maybe(function () {
+
+    flow.maybe(function () {
       route === 'B'
     }, function (next) {
       return next(null, fixtureB)
     })
-    .then(function (next, value) {
+
+    flow.then(function (next, value) {
       assert(value === fixtureA)
     })
-    .catch(function (err) {
+
+    flow.catch(function (err) {
       assert(false)
     })
   })
 
-  it('should choose none when no some match', function () {
+  it('none(): should be invoked when no match is successful', function () {
     var someA = false
     var someB = false
     var fixtureA = 'hello'
     var fixtureB = 'world'
     var fixtureC = 'tekken'
+    var flow = breeze()
 
-    breeze()
-    .some(someA, function (next) {
+    flow.some(someA, function (next) {
       return next(null, fixtureA)
     })
-    .some(someB, function (next) {
+
+    flow.some(someB, function (next) {
       return next(null, fixtureB)
     })
-    .none(function (next) {
+
+    flow.none(function (next) {
       return next(null, fixtureC)
     })
-    .then(function (next, value) {
+
+    flow.then(function (next, value) {
       assert(value === fixtureC)
     })
-    .catch(function (err) {
+
+    flow.catch(function (err) {
       assert(false)
     })
   })
 
-  it('should choose some when some has matched', function () {
+  it('some(): should invoke when match is successful', function () {
     var someA = true
     var someB = false
     var fixtureA = 'hello'
     var fixtureB = 'world'
     var fixtureC = 'tekken'
+    var flow = breeze()
 
-    breeze()
-    .some(someA, function (next) {
+    flow.some(someA, function (next) {
       return next(null, fixtureA)
     })
-    .some(someB, function (next) {
+
+    flow.some(someB, function (next) {
       return next(null, fixtureB)
     })
-    .none(function (next) {
+
+    flow.none(function (next) {
       return next(null, fixtureC)
     })
-    .then(function (next, value) {
+
+    flow.then(function (next, value) {
       assert(value === fixtureA)
     })
-    .catch(function (err) {
+
+    flow.catch(function (err) {
       assert(false)
     })
   })
 
-  it('should support check methods', function () {
+  it('when(): properly handles check method success result', function () {
     var check = function (value) {
       return value === 'passed'
     }
@@ -135,19 +148,15 @@ describe('breeze', function () {
     })
   })
 
-  it('should properly chain when async is involved', function (done) {
-    var flow = breeze(function (next) {
-      var request = http.request({
-        hostname: 'httpbin.org',
-        port: 80,
-        path: '/get',
-        method: 'GET'
-      }, function (res) {
-        next(null, res)
-      })
+  it('when(): supports async values from previous step as arguments for check method', function (done) {
+    var flow = breeze()
 
-      request.on('error', next)
-      request.end()
+    flow.then(function (next) {
+      setTimeout(function () {
+        next(null, {
+          statusCode: 200
+        })
+      }, 0)
     })
 
     flow.when(function (response) {
@@ -163,7 +172,7 @@ describe('breeze', function () {
     })
   })
 
-  it('should properly handle try/catch promise success', function (done) {
+  it('next(): supports promise success when promise is passed as first argument', function (done) {
     var noop = function () {}
     var fixture = 'hello world'
     var promise = {
@@ -182,11 +191,11 @@ describe('breeze', function () {
     })
   })
 
-  it('should properly handle try/catch promise error', function (done) {
+  it('next(): supports promise error when promise is passed as first argument', function (done) {
     var fixture = 'hello world'
-    var noop = function (next) {
-      next(fixture)
-    }
+    var flow = breeze()
+    var noop = function (next) { next(fixture) }
+
     var promise = {
       then: function () {
         return {
@@ -196,19 +205,25 @@ describe('breeze', function () {
       catch: noop
     }
 
-    breeze(function (next) {
+    flow.then(function (next) {
       next(promise)
-    }).then(function (next, value) {
+    })
+
+    flow.then(function (next, value) {
       assert(false)
-    }).catch(function (err) {
+    })
+
+    flow.catch(function (err) {
       assert(err === fixture)
       done()
     })
   })
 
-  it('should properly handle directly passed values w/ promise', function (done) {
+  it('then(): supports sending additional arguments with promise as first argument', function (done) {
     var fixture = 'hello world'
+    var flow = breeze()
     var noop = function () {}
+
     var promise = {
       then: function (next) {
         next(fixture)
@@ -219,30 +234,94 @@ describe('breeze', function () {
       catch: noop
     }
 
-    breeze(function (next) {
+    flow.then(function (next) {
       next(promise, 'testing')
-    }).then(function (next, passedValue, promiseValue) {
+    })
+
+    flow.then(function (next, passedValue, promiseValue) {
       assert(passedValue === 'testing')
       assert(promiseValue === fixture)
       done()
-    }).catch(function (err) {
+    })
+
+    flow.catch(function (err) {
       assert(false)
     })
   })
 
-  it('should properly success through returned promise', function (done) {
+  it('deferred(): should properly send success to then()', function (done) {
     var fixture = 'hello world'
+    var flow = breeze()
+    var promise = flow.deferred()
 
-    var flow = breeze(function (next) {
+    flow.then(function (next) {
       next(null, 'testing')
     })
-
-    var promise = flow.promise()
 
     promise.then(function (value) {
       assert(value === 'testing')
       done()
-    }).catch(function (err) {
+    })
+
+    promise.catch(function (err) {
+      assert(false)
+    })
+  })
+
+  it('deferred(): should properly send errors to catch()', function (done) {
+    var fixture = 'hello world'
+    var flow = breeze()
+    var promise = flow.deferred()
+
+    flow.then(function (next) {
+      return next('testing')
+    })
+
+    promise.then(function (value) {
+      return assert(false)
+    })
+
+    promise.catch(function (err) {
+      assert(err === 'testing')
+      return done()
+    })
+  })
+
+  it('pass(): properly introduce variables into flow', function (done) {
+    var flow = breeze()
+
+    flow.pass('first')
+    flow.pass('second')
+    flow.then(function (next, a, b) {
+      assert(a === 'first')
+      assert(b === 'second')
+      return done()
+    })
+    flow.catch(function (error) {
+      assert(false)
+    })
+  })
+
+  it('each(): properly iterate and apply logic to referenced array values', function (done) {
+    var flow = breeze()
+    var fixture = [1, 2, 3]
+
+    flow.pass(fixture)
+
+    flow.each(function (iterables) {
+      return iterables
+    }, function (value, index, next) {
+      return next(null, value * 3)
+    })
+
+    flow.then(function (next, iterables) {
+      assert(iterables[0] === 3)
+      assert(iterables[1] === 6)
+      assert(iterables[2] === 9)
+      return done()
+    })
+
+    flow.catch(function (error) {
       assert(false)
     })
   })
