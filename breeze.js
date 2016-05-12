@@ -13,6 +13,11 @@ Breeze.prototype.run = function () {
   var step = this.steps.shift()
   var type = step[0]
 
+  if (this.skip && typeof this.skip === 'number') {
+    this.skip--
+    return this.check(true)
+  }
+
   try {
     this.running = true
     if (this[type + 'Handler']) return this[type + 'Handler'](step, args)
@@ -31,7 +36,7 @@ Breeze.prototype.onUncaughtError = function (err) {
 }
 
 // Determine system state and invoke next step when possible
-Breeze.prototype.check = function (pop) {
+Breeze.prototype.check = function (pop, skip) {
   this.steps = this.steps || []
 
   if (pop && this.steps.length) {
@@ -279,6 +284,12 @@ Breeze.prototype.createStepCallback = function () {
   }
 
   return function (err) {
+    if (err === 'skip') {
+      system.skip = arguments[1] || 1
+      system.args = system.args ? system.args.slice(1) : []
+      return system.check(true)
+    }
+
     system.context = this
     system.args = cloneArguments(arguments, 1)
 

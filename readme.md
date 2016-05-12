@@ -41,11 +41,27 @@ The `next` method passed through breeze has a very small api. It accepts two var
 
 When a *truthy* `err` is passed the system will halt (no other actions will be taken) and `.catch` will be triggered.
 
+#### Promises
+
 When a `promise` is passed the system will attach to either the `then / catch` methods, or the `.then(then, catch)`
 method style depending on the promise type passed. Whenever the `then` is invoked, any `arguments` passed along with
 the passed promise are placed at the *front* of the arguments array, and the success arguments will be *last*.
 
 This allows you to chain multiple promises while still passing values down the chain.
+
+```
+next(promise, arguments...)
+```
+
+#### Skipping Steps
+
+When you pass the string `skip` as the first argument in the `next` method, the next step in the sequence will be skipped completely.
+
+You can skip multiple steps by providing a number as the second argument to `next` equalling the number of steps you wish to skip. Defaults to `1`.
+
+```
+next('skip', 1 /* optional; number of steps to skip */)
+```
 
 ## Examples
 
