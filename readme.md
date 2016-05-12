@@ -22,30 +22,46 @@ var breeze = require('breeze')
 
 ## API
 
-- `breeze(next)` - Initialize breeze flow system, supports initial `.then` method.
+- `breeze(step)` - Initialize breeze flow system, supports initial `.then` method.
 - `.pass(value)` - Introduce new value into flow system, argument is appended to system arguments passed through `next`.
-- `.when(check, next)` - When `check` is truthy, add `next` to the stack
-- `.maybe(check, next)` - When `check` is truthy, add `next` to the stack, sugar for `breeze.when`
-- `.some(check, next)` - When `check` is truthy and no other `some` or `none` has ran, add to the stack
-- `.none(next)` - Whenever no `some` have ran, add callback to the stack
-- `.then(next)` - Add callback to stack
-- `.each(iterables, iteratee, next)` - Iterate over an object / array and invoke a method for each entry. `iterables` is not a reference therefore, you must properly store `iterables` outside of the flow if you plan to update or modify the object.
-- `.catch(next)` - Any error caught will terminate stack and be sent here
+- `.when(check, step)` - When `check` is truthy, add `step` to the stack
+- `.maybe(check, step)` - When `check` is truthy, add `step` to the stack, sugar for `breeze.when`
+- `.some(check, step)` - When `check` is truthy and no other `some` or `none` has ran, add to the stack
+- `.none(step)` - Whenever no `some` have ran, add callback to the stack
+- `.then(step)` - Add callback to stack
+- `.each(iterables, iteratee, step)` - Iterate over an object / array and invoke a method for each entry. `iterables` is not a reference therefore, you must properly store `iterables` outside of the flow if you plan to update or modify the object.
+- `.catch(step)` - Any error caught will terminate stack and be sent here
 - `.deferred()` - Returns a deferred promise system, allowing for a passable then / catch.
 - `.reset()` - Reset current system
 
-### Next
+### Step
 
-The `next` method passed through breeze has a very small api. It accepts two variants of usage, normal node style
-`err, arguments...`, and `promise, arguments...`.
+The `step` method passed through breeze has a very small API, providing any `arguments` stored within the system passed through either the `next` or `.pass` methods, and the `next` callback method which is explained below.
 
-When a *truthy* `err` is passed the system will halt (no other actions will be taken) and `.catch` will be triggered.
 
-#### Promises
+```
+function step (next, arguments...)
+```
 
-When a `promise` is passed the system will attach to either the `then / catch` methods, or the `.then(then, catch)`
-method style depending on the promise type passed. Whenever the `then` is invoked, any `arguments` passed along with
-the passed promise are placed at the *front* of the arguments array, and the success arguments will be *last*.
+#### Next
+
+The `next` method is the step callback system, it provides utility for short-circuiting the step system with an error, passing additional arguments along the chain, and skipping steps completely.
+
+```
+return next(err, arguments...)
+```
+
+The `next` method supports additional modes explained below.
+
+##### Errors
+
+When a *truthy* `err` is passed the system will short-circuit (no other actions will be taken) and `.catch` will be triggered.
+
+##### Promises
+
+When a `promise` is passed the system will attach to either a `then / catch` or `.then(success, catch)` method style depending on the promise type passed.
+
+Whenever the promises `then / then success` method is invoked, any `arguments` passed along with the initial promise are placed at the *front* of the arguments array, and the success arguments will be *last*.
 
 This allows you to chain multiple promises while still passing values down the chain.
 
@@ -53,7 +69,7 @@ This allows you to chain multiple promises while still passing values down the c
 next(promise, arguments...)
 ```
 
-#### Skipping Steps
+##### Skipping Steps
 
 When you pass the string `skip` as the first argument in the `next` method, the next step in the sequence will be skipped completely.
 
