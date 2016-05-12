@@ -68,7 +68,7 @@ next('skip', 1 /* optional; number of steps to skip */)
 - [basic](examples/basic.js) - Bare-bones example (`breeze`, `then`, `catch`)
 - [promises](examples/promises.js) - Returning and using promises within breeze (`then`, `next(promise)`)
 - [each](examples/each.js) - Breeze array iteration (`then`, `pass`, `each`, `catch`)
-- [when](examples/maybe.js) - Conditional flows (`then`, `when`)
+- [when](examples/when.js) - Conditional flows (`then`, `when`)
 
 
 Check out the [examples](examples/) directory for more in-depth examples and tutorials of how to use breeze.
