@@ -152,7 +152,7 @@ Breeze.prototype.someHandler = Breeze.prototype.whenHandler = function (step, ar
 
     step = resolution
     args.unshift(this.createStepCallback())
-    return step.apply(context, args)
+    return step.apply(this.context, args)
   }
 
   return this.check(true)
@@ -182,7 +182,7 @@ Breeze.prototype.noneHandler = function (step, args) {
     this.hasNoneHappened = true
     step = step[1]
     args.unshift(this.createStepCallback())
-    return step.apply(context, args)
+    return step.apply(this.context, args)
   }
 
   return this.check(true)
