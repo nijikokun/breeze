@@ -86,7 +86,7 @@ Breeze.prototype.eachHandler = function (step, args) {
 
   function iterableCallback (error, value) {
     if (system.err) return
-    if (error) return system.handleError(error)
+    if (error) return system.onUncaughtError(error)
     if (arguments.length > 1) {
       if (lookup) {
         lookup[iterables[count]] = value
