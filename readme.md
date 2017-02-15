@@ -38,7 +38,7 @@ let flow = new Breeze()
 
 #### Flow methods:
 
-##### `.then(Promise, Mixed)`
+##### `.then(Mixed)`
 
 Step function, can be a `Promise`, `Function` with a return value, or a value.
 
