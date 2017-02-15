@@ -1,11 +1,19 @@
 # Breeze
 
-Functional async flow control library. Turn your asynchronous code into bite-sized synchronous looking functions.
+Functional async flow control library built on promises. Managing promises and async code has never been easier.
 
 [![version][npm-version]][npm-url]
 [![License][npm-license]][license-url]
 [![Downloads][npm-downloads]][npm-url]
 [![Dependencies][david-image]][david-url]
+
+## Features
+
+- Small footprint
+- Native promise support
+- No chaining required
+- Benchmarking (yes, even Promises)
+- Logging (Chain logs, argument logs, and more...)
 
 ## Install
 
@@ -14,80 +22,88 @@ Functional async flow control library. Turn your asynchronous code into bite-siz
 
 ## Usage
 
-**Node.js / Browserify**
+**Node.js / Browserify / Webpack**
 
 ```js
-var breeze = require('breeze')
+const Breeze = require('breeze')
 ```
 
-## API
+## Documentation
 
-- `breeze(step)` - Initialize breeze flow system, supports initial `.then` method.
-- `.pass(value)` - Introduce new value into flow system, argument is appended to system arguments passed through `next`.
-- `.when(check, step)` - When `check` is truthy, add `step` to the stack
-- `.maybe(check, step)` - When `check` is truthy, add `step` to the stack, sugar for `breeze.when`
-- `.some(check, step)` - When `check` is truthy and no other `some` or `none` has ran, add to the stack
-- `.none(step)` - Whenever no `some` have ran, add callback to the stack
-- `.then(step)` - Add callback to stack
-- `.each(iterables, iteratee, step)` - Iterate over an object / array and invoke a method for each entry. `iterables` is not a reference therefore, you must properly store `iterables` outside of the flow if you plan to update or modify the object.
-- `.catch(step)` - Any error caught will terminate stack and be sent here
-- `.deferred()` - Returns a deferred promise system, allowing for a passable then / catch.
-- `.reset()` - Reset current system
+#### Creating a flow:
 
-### Step
-
-The `step` method passed through breeze has a very small API, providing any `arguments` stored within the system passed through either the `next` or `.pass` methods, and the `next` callback method which is explained below.
-
-
-```
-function step (next, arguments...)
+```js
+let flow = new Breeze()
 ```
 
-#### Next
+#### Flow methods:
 
-The `next` method is the step callback system, it provides utility for short-circuiting the step system with an error, passing additional arguments along the chain, and skipping steps completely.
+##### `.then(Promise, Mixed)`
 
-```
-return next(err, arguments...)
-```
+Step function, can be a `Promise`, `Function` with a return value, or a value.
 
-The `next` method supports additional modes explained below.
-
-##### Errors
-
-When a *truthy* `err` is passed the system will short-circuit (no other actions will be taken) and `.catch` will be triggered.
-
-##### Promises
-
-When a `promise` is passed the system will attach to either a `then / catch` or `.then(success, catch)` method style depending on the promise type passed.
-
-Whenever the promises `then / then success` method is invoked, any `arguments` passed along with the initial promise are placed at the *front* of the arguments array, and the success arguments will be *last*.
-
-This allows you to chain multiple promises while still passing values down the chain.
-
-```
-next(promise, arguments...)
+```js
+flow
+  .then(result => 'function with return value')
+  .then(result => console.log('function says:', result))
+  .then(new Promise((resolve, reject) => {
+    return resolve('Promise resolution')
+  }))
+  .then(result => console.log('promise says:', result))
 ```
 
-##### Skipping Steps
+Unlike promises you are not required to chain breeze flows:
 
-When you pass the string `skip` as the first argument in the `next` method, the next step in the sequence will be skipped completely.
-
-You can skip multiple steps by providing a number as the second argument to `next` equalling the number of steps you wish to skip. Defaults to `1`.
-
-```
-next('skip', 1 /* optional; number of steps to skip */)
+```js
+flow.then(result => 'function with return value')
+flow.then(result => console.log('function says:', result))
 ```
 
-## Examples
+##### `.catch([Exception exception, ], Function method)`
 
-- [basic](examples/basic.js) - Bare-bones example (`breeze`, `then`, `catch`)
-- [promises](examples/promises.js) - Returning and using promises within breeze (`then`, `next(promise)`)
-- [each](examples/each.js) - Breeze array iteration (`then`, `pass`, `each`, `catch`)
-- [when](examples/when.js) - Conditional flows (`then`, `when`)
+Error handler, invoked after promise chain and on step error. Can be placed in multiple locations along 
+the flow chain to capture specific steps, or specific exceptions and handle.
 
+```js
+flow
+  .then(() => throw new Error('Spoiler Alert'))
+  .catch(Error, err => console.log('Specialized Catch:', err))
+  .catch(err => console.log('Generic Catch:', err))
+```
 
-Check out the [examples](examples/) directory for more in-depth examples and tutorials of how to use breeze.
+##### `.id(String name)`
+
+Identify step. Use after defining step to have identifier show in stacktrace.
+
+##### `.all(Array promises)`
+
+Map promise results to an array **in order resolved**.
+
+##### `.skip(Integer amount)`
+
+Skip steps in chain.
+
+##### `.map(Array promises)`
+
+Map promise results to an array **in given order**.
+
+##### `.get(Integer index)`
+
+Obtain entry in array at given index in next step.
+
+##### `.tap(`
+
+##### `.when`
+
+##### `.each`
+
+##### `.spread`
+
+##### `.return`
+
+##### `.throw`
+
+##### `.map`
 
 ## License
 
