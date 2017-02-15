@@ -30,80 +30,111 @@ const Breeze = require('breeze')
 
 ## Documentation
 
-#### Creating a flow:
+### Breeze Flow
 
 ```js
+import Breeze from 'breeze'
+
 let flow = new Breeze()
 ```
 
-#### Flow methods:
+### Breeze Flow Instance Methods
 
-##### `.then(Mixed)`
+#### then(method: Function|Promise)
 
-Step function, can be a `Promise`, `Function` with a return value, or a value.
+  Add step to flow chain.
+
+  ```js
+  flow
+    .then(value => 'function with return value')
+    .then(value => console.log('function says:', value))
+    .then(new Promise((resolve, reject) => {
+      return resolve('Promise resolution')
+    }))
+    .then(value => console.log('promise says:', value))
+  ```
+
+  **Note:** You are not required to chain instance methods.
+
+  ```js
+  flow.then(value => 'function with return value')
+  flow.then(value => console.log('function says:', value))
+  ```
+
+#### catch(type?: ErrorType, handler: Function)
+
+  Handle chain rejections. Accepts an optional custom error type to capture specific rejections in the flow chain. 
+
+  ```js
+  flow.then(() => throw new Error('Spoiler Alert'))
+
+  flow.catch(CustomError, err => console.log('Specialized Catch:', err))
+
+  flow.catch(err => console.log('Generic Catch:', err))
+  ```
+
+#### id(name: String)
+
+  Identify a step. Useful for benchmarking and logs.
+
+  ```js
+  // Create a flow step
+  flow.then(results => client.get('/users'))
+
+  // Identify step for benchmarking and logs
+  flow.id('fetch-users')
+  ```
+
+#### each(promises: Array<Promise>, method: Function)
+
+  Invoke method on results of each Promise in the given Array.
+  
+  **Todo:** Support previous chain `Array<Promise>` value.
+
+#### all(promises: Array<Promise>)
+
+  Map promise results to an array **in order resolved**.
+
+#### map(promises: Array<Promise>)
+
+  Map promise results to an array **in given order**.
+
+#### skip(steps: Number)
+
+  Skip `n` steps after this point.
+
+#### get(index: Number)
+
+  Obtain entry in array at given index in next step.
+  
+  ```js
+  flow
+    .then(() => [1,2,3])
+    .get(0)
+    .then(item => console.log(item)) // Outputs: 1
+  ```
+
+#### when(conditional: Function|Truthy, method: Function)
+
+#### spread(method: Function)
+
+#### return(value: any)
+
+Convenience method for:
 
 ```js
-flow
-  .then(result => 'function with return value')
-  .then(result => console.log('function says:', result))
-  .then(new Promise((resolve, reject) => {
-    return resolve('Promise resolution')
-  }))
-  .then(result => console.log('promise says:', result))
+.then(() => value)
 ```
 
-Unlike promises you are not required to chain breeze flows:
+#### throw(reason: any)
+
+Convenience method for:
 
 ```js
-flow.then(result => 'function with return value')
-flow.then(result => console.log('function says:', result))
+.then(() => throw error)
 ```
 
-##### `.catch([Exception exception, ], Function method)`
-
-Error handler, invoked after promise chain and on step error. Can be placed in multiple locations along 
-the flow chain to capture specific steps, or specific exceptions and handle.
-
-```js
-flow
-  .then(() => throw new Error('Spoiler Alert'))
-  .catch(Error, err => console.log('Specialized Catch:', err))
-  .catch(err => console.log('Generic Catch:', err))
-```
-
-##### `.id(String name)`
-
-Identify step. Use after defining step to have identifier show in stacktrace.
-
-##### `.all(Array promises)`
-
-Map promise results to an array **in order resolved**.
-
-##### `.skip(Integer amount)`
-
-Skip steps in chain.
-
-##### `.map(Array promises)`
-
-Map promise results to an array **in given order**.
-
-##### `.get(Integer index)`
-
-Obtain entry in array at given index in next step.
-
-##### `.tap(`
-
-##### `.when`
-
-##### `.each`
-
-##### `.spread`
-
-##### `.return`
-
-##### `.throw`
-
-##### `.map`
+#### tap(method: Function)
 
 ## License
 
