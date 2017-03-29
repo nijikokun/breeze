@@ -115,8 +115,38 @@ let flow = new Breeze()
   ```
 
 #### when(conditional: Function|Truthy, method: Function)
+  
+  Invokes method when the `conditional` argument is `truthy`, otherwise skips to the next step.
+
+  ```js
+  flow
+    .then(() => [1, 2, 3])
+    .when(result => result[0] === 1, result => console.log(result[0], '=', 1))
+  ```
+
+  This is a basic example to illustrate the small power of how you can make `if` statements
+  asynchronous.
 
 #### spread(method: Function)
+
+  Spreads each `argument` from a successful step as individual arguments on the passed `method`
+
+  ```js
+  flow
+    .then(() => ['username', 'Steven Seagal'])
+    .spread((field, value) => console.log(field, '=', value)) // username = Steven Seagal
+  ```
+
+#### tap(method: Function)
+
+  Invoke `method` without modifying the return result of the step, useful for inspection.
+
+  ```js
+  flow
+    .then(() => [1, 2, 3])
+    .tap(result => console.log(result))
+    .then(result => console.log(result)) // [1,2,3]
+  ```
 
 #### return(value: any)
 
@@ -134,7 +164,6 @@ Convenience method for:
 .then(() => throw error)
 ```
 
-#### tap(method: Function)
 
 ## License
 
